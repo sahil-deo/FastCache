@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/sahil/Code/cpp/Redis/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
