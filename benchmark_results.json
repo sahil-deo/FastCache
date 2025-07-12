@@ -1,0 +1,98 @@
+{
+  "SET": {
+    "avg_time_ms": 0.044,
+    "min_time_ms": 0.025,
+    "max_time_ms": 108.46,
+    "median_time_ms": 0.039,
+    "p95_time_ms": 0.055,
+    "p99_time_ms": 0.088,
+    "total_time_ms": 8995.666,
+    "operations_per_second": 22788.75,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "GET": {
+    "avg_time_ms": 0.054,
+    "min_time_ms": 0.024,
+    "max_time_ms": 7.772,
+    "median_time_ms": 0.051,
+    "p95_time_ms": 0.075,
+    "p99_time_ms": 0.106,
+    "total_time_ms": 11090.527,
+    "operations_per_second": 18484.24,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "LSET": {
+    "avg_time_ms": 0.066,
+    "min_time_ms": 0.035,
+    "max_time_ms": 27.407,
+    "median_time_ms": 0.063,
+    "p95_time_ms": 0.085,
+    "p99_time_ms": 0.116,
+    "total_time_ms": 6811.146,
+    "operations_per_second": 15048.86,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "LGET": {
+    "avg_time_ms": 0.071,
+    "min_time_ms": 0.042,
+    "max_time_ms": 6.775,
+    "median_time_ms": 0.068,
+    "p95_time_ms": 0.091,
+    "p99_time_ms": 0.137,
+    "total_time_ms": 7253.599,
+    "operations_per_second": 14130.92,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "LPUSH": {
+    "avg_time_ms": 0.066,
+    "min_time_ms": 0.038,
+    "max_time_ms": 18.041,
+    "median_time_ms": 0.062,
+    "p95_time_ms": 0.085,
+    "p99_time_ms": 0.126,
+    "total_time_ms": 6798.827,
+    "operations_per_second": 15076.13,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "KEYS": {
+    "avg_time_ms": 1.245,
+    "min_time_ms": 0.002,
+    "max_time_ms": 24676.718,
+    "median_time_ms": 0.003,
+    "p95_time_ms": 0.005,
+    "p99_time_ms": 0.008,
+    "total_time_ms": 25527.265,
+    "operations_per_second": 803.06,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "LKEYS": {
+    "avg_time_ms": 0.04,
+    "min_time_ms": 0.002,
+    "max_time_ms": 119.919,
+    "median_time_ms": 0.002,
+    "p95_time_ms": 0.003,
+    "p99_time_ms": 0.007,
+    "total_time_ms": 816.15,
+    "operations_per_second": 25117.94,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  },
+  "APP": {
+    "avg_time_ms": 0.039,
+    "min_time_ms": 0.002,
+    "max_time_ms": 119.362,
+    "median_time_ms": 0.003,
+    "p95_time_ms": 0.005,
+    "p99_time_ms": 0.009,
+    "total_time_ms": 804.251,
+    "operations_per_second": 25489.54,
+    "errors": 0,
+    "success_rate_percent": 100.0
+  }
+}

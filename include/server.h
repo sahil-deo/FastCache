@@ -11,6 +11,9 @@
 #include <deque>
 #include <fstream>
 
+#include "dict.h"
+#include "llist.h"
+
 class redisServer{
     
     public:
@@ -24,7 +27,6 @@ class redisServer{
     };
 
     std::unordered_map<int, ClientState> m_clients;
-
 
     std::unordered_map<std::string, std::string> m_string_cache;
     std::unordered_map<std::string, std::deque<std::string>> m_list_cache;
@@ -211,6 +213,8 @@ class redisServer{
                 break;
             }
         }
+
+        
     }
 
     void process_complete_commands(int fd){
@@ -241,7 +245,12 @@ class redisServer{
             iss >> key >> value;
 
             if(!key.empty() && !value.empty()){
-                m_string_cache[key] = value;
+                //Using unordered_map
+                {
+                    // m_string_cache[key] = value;
+                }
+                
+                setString(key, value);
                 std::cout << "Value Stored\n";
                 return "OK\n";
             }
@@ -253,86 +262,128 @@ class redisServer{
             std::string key;
             iss >> key;
             if(!key.empty()){
-                auto it = m_string_cache.find(key);
-                if (it != m_string_cache.end()){
-                    return it->second + "\n";
+
+                //Using unordered_map
+                {    
+                    // auto it = m_string_cache.find(key);
+                    // if (it != m_string_cache.end()){
+                    //     return it->second + "\n";
+                    // }
+                    // return "-1\n";
                 }
-                return "-1\n";
+                        
+                //using custom stringHash
+                const char * val = getString(key);
+                if(val == nullptr){
+                    return "-1\n";
+                }
+
+                std::string result(val);
+                result.append("\n");
+                return result;
+
             }
             return "ERR Wrong Number of Arguments\n";
         }else if (cmd == "DEL"){
             std::string key;
             iss >> key;
             if(!key.empty()){
-                int deleted = m_string_cache.erase(key);
-                return std::to_string(deleted) + "\n";
+                // int deleted = m_string_cache.erase(key); 
+                // return std::to_string(deleted) + "\n";
+
+                bool deleted = delKey(key);
+
+                if(deleted){
+                    return "1\n";
+                }
+                return "0\n";
             }
             return "ERR Wrong Number of Arguments\n";
         }else if (cmd == "KEYS"){
-            std::string result;
-            for(auto&it: m_string_cache){
-                result.append(it.first);
-                result.append(" ");
-            }
+            // std::string result;
+            // for(auto&it: m_string_cache){
+            //     result.append(it.first);
+            //     result.append(" ");
+            // }
+            // result.append("\n");
+
+            std::string result = getKeys();
             result.append("\n");
             return result;
-        }else if(cmd == "APP"){
-            std::string key, value;
-            iss >> key >> value;
-
-            if(!key.empty() && !value.empty()){
-                m_string_cache[key].append(value);
-                return "OK\n";
-            }
-            return "ERR Wrong Number of Arguments\n";
         }else if (cmd == "LSET"){
             std::string key;
-            std::deque<std::string> values;
+            // std::deque<std::string> values;
             std::string value;
             
             iss >> key;
             
-            while(iss >> value){
-                values.push_back(value);
-                value.clear();
-            }
+            // while(iss >> value){
+            //     values.push_back(value);
+            //     value.clear();
+            // }
 
-            if(!key.empty() && !values.empty()){
-                m_list_cache[key] = values;
+            // if(!key.empty() && !values.empty()){
+            //     m_list_cache[key] = values;
+            //     return "OK\n";
+            // }
+            
+            
+            if(!key.empty()){
+
+                while(iss >> value){
+                    if (value.empty()){break;}
+                    pushBackList(key, value);
+                }
+
                 return "OK\n";
             }
+
+
 
             return "ERR Wrong Number of Arguments\n";
 
         }else if (cmd == "LGET"){
             std::string key;
             std::string value;
-
+            
+            
             iss >> key;
-            if (!key.empty()){
-                iss >> value;
-                if(!value.empty()){
+            {
+            // if (!key.empty()){
+            //     iss >> value;
+            //     if(!value.empty()){
 
-                    int v = std::stoi(value);
+            //         int v = std::stoi(value);
 
-                    if (v > m_list_cache[key].size()-1){
-                        return "ERR Index Out of Bounds\n";
-                    }
+            //         if (v > m_list_cache[key].size()-1){
+            //             return "ERR Index Out of Bounds\n";
+            //         }
 
-                    std::string result = m_list_cache[key].at(v);
-                    result.append("\n");
-                    return result;
+            //         std::string result = m_list_cache[key].at(v);
+            //         result.append("\n");
+            //         return result;
                     
-                }
+            //     }
 
-                std::string result;
-                for(std::string& v: m_list_cache[key]){
-                    result.append(v);
-                    result.append(" ");
-                }
-                result.append("\n");
-                std::cout << result << "\n";
-                return result;
+            //     std::string result;
+            //     for(std::string& v: m_list_cache[key]){
+            //         result.append(v);
+            //         result.append(" ");
+            //     }
+            //     result.append("\n");
+            //     std::cout << result << "\n";
+            //     return result;
+            // }
+
+            }
+            
+            iss >> value;
+            if(!key.empty() && !value.empty()){
+                return getListR(key, std::stoi(value));
+            }
+
+            if(!key.empty()){
+                return getList(key);
             }
             return "ERR Wrong Number of Arguments\n";
 
@@ -340,42 +391,101 @@ class redisServer{
             std::string key;
             iss >> key;
             if(!key.empty()){
-                int deleted = m_list_cache.erase(key);
-                return std::to_string(deleted) + "\n";
+                // int deleted = m_list_cache.erase(key);
+                // return std::to_string(deleted) + "\n";
+
+                bool result = delList(key);
+                if(result){
+                    return "1\n";
+                }else{
+                    return "0\n";
+                }
             }
             return "ERR Wrong Number of Arguments\n";
-        }else if (cmd == "LPUSH"){
+        }else if (cmd == "LPUSHBACK"){
             std::string key;
             iss >> key;
 
             std::string value;
             if(!key.empty()){
                 while(iss >> value){
-                    m_list_cache[key].push_back(value);
+                    // m_list_cache[key].push_back(value);
+                    // value.clear();
+
+                    pushBackList(key, value);
                     value.clear();
                 }
                 return "OK\n";
             }
 
             return "ERR Wrong Number of Arguments\n";
-        }else if (cmd == "LPOP"){
+        }else if (cmd == "LPOPBACK"){
             std::string key;
             iss >> key;
             if(!key.empty()){
-                std::string value;
-                std::string result = "";
-                while(iss >> value){
+                // std::string value;
+                // std::string result = "";
+                // while(iss >> value){
                     
-                    int v = std::stoi(value);
-                    if(v > m_list_cache[key].size()-1){
-                        return "ERR Index Out of Bounds\n";
-                    }
+                //     int v = std::stoi(value);
+                //     if(v > m_list_cache[key].size()-1){
+                //         return "ERR Index Out of Bounds\n";
+                //     }
 
-                    result.append(m_list_cache[key].at(v));
-                    m_list_cache[key].erase(m_list_cache[key].begin() + v);
-                    result.append(" ");
+                //     result.append(m_list_cache[key].at(v));
+                //     m_list_cache[key].erase(m_list_cache[key].begin() + v);
+                //     result.append(" ");
 
+                // }
+                // result.append("\n");
+                // return result;
+
+                std::string result = popBackList(key);
+
+                result.append("\n");
+                return result;
+            }
+            return "ERR Wrong Number of Arguments\n";
+        }else if (cmd == "LPUSHFRONT"){
+            std::string key;
+            iss >> key;
+
+            std::string value;
+            if(!key.empty()){
+                while(iss >> value){
+                    // m_list_cache[key].push_back(value);
+                    // value.clear();
+
+                    pushFrontList(key, value);
+                    value.clear();
                 }
+                return "OK\n";
+            }
+
+            return "ERR Wrong Number of Arguments\n";
+        }else if (cmd == "LPOPFRONT"){
+            std::string key;
+            iss >> key;
+            if(!key.empty()){
+                // std::string value;
+                // std::string result = "";
+                // while(iss >> value){
+                    
+                //     int v = std::stoi(value);
+                //     if(v > m_list_cache[key].size()-1){
+                //         return "ERR Index Out of Bounds\n";
+                //     }
+
+                //     result.append(m_list_cache[key].at(v));
+                //     m_list_cache[key].erase(m_list_cache[key].begin() + v);
+                //     result.append(" ");
+
+                // }
+                // result.append("\n");
+                // return result;
+
+                std::string result = popFrontList(key);
+
                 result.append("\n");
                 return result;
             }
@@ -393,32 +503,17 @@ class redisServer{
             return "ERR Wrong Number of Arguments\n";
         }else if (cmd == "LKEYS"){
             std::string result;
-            for(auto& it: m_list_cache){
-                result.append(it.first);
-                result.append(" ");
-            }
-            result.append("\n");
+            // for(auto& it: m_list_cache){
+            //     result.append(it.first);
+            //     result.append(" ");
+            // }
+            // result.append("\n");
+
+
+            result = getListKeys();
+
             return result;
-        }else if (cmd == "LSIZE"){
-            std::string key;
-            iss >> key;
-            if(!key.empty()){
-                int size = m_list_cache[key].size();
-                std::string result = std::to_string(size);
-                result.append("\n");
-                return result;
-            }
-            
-            return "ERR Wrong Number of Arguments\n";
-        }else if (cmd == "LAPP"){
-            std::string key, index, value;
-            iss >> key >> index >> value;
-            if(!key.empty() && !index.empty() && !value.empty()){
-                m_list_cache[key].at(std::stoi(index)).append(value);
-                return "OK\n";
-            }
-            return "ERR Wrong Number of Arguments\n";
-        }else if(cmd == "STORE"){
+        }else if (cmd == "STORE"){
             std::ofstream file("Redis_Cache", std::ios::ate);
             for(auto&i : m_string_cache){
                 file << " ";
@@ -430,7 +525,7 @@ class redisServer{
                 file << ":";
 
             }
-            file << ";";
+            file << "; ";
             for(auto&i : m_list_cache){
                 file << " ";
                 file << i.first;
@@ -450,7 +545,7 @@ class redisServer{
             
             return "OK\n";
         }
-        else if(cmd == "LOAD"){
+        else if (cmd == "LOAD"){
             m_string_cache.clear();
             m_list_cache.clear();
 
@@ -465,7 +560,7 @@ class redisServer{
 
             while(file >> value){
 
-                if(current_key == ""){
+                if(current_key == "" && value != ";"){
                     current_key = value;
                     file >> value;
                 }
@@ -474,7 +569,7 @@ class redisServer{
                     file >> value;
                     current_key = value;
                     
-                }else if(value == ":;"){
+                }else if(value == ":;" || value ==";"){
                     if(string) {
                         string = false;
                         list = true;       
@@ -505,6 +600,11 @@ class redisServer{
         std::cout << "Sending Response\n";
         if(!client.write_buffer.empty()){
             modify_epoll(fd, EPOLLIN | EPOLLOUT | EPOLLET);
+        }
+
+
+        if(client.write_buffer.empty()){
+           modify_epoll(fd, EPOLLIN | EPOLLET); 
         }
     }
    
