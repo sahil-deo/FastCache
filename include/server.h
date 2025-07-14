@@ -519,7 +519,7 @@ class redisServer{
 
             return result;
         }else if (cmd == "STORE"){
-            std::ofstream file("Redis_Cache", std::ios::ate);
+            /*std::ofstream file("Redis_Cache", std::ios::ate);
             for(auto&i : m_string_cache){
                 file << " ";
                 file << i.first;
@@ -547,11 +547,16 @@ class redisServer{
             file << "; ";
 
             file.close();
+            */
             
+            std::ofstream file("Redis Cache", std::ios::ate);
+
+            file << getSnapList();
+
             return "OK\n";
         }
         else if (cmd == "LOAD"){
-            m_string_cache.clear();
+            /*m_string_cache.clear();
             m_list_cache.clear();
 
             std::ifstream file("Redis_Cache");
@@ -594,6 +599,26 @@ class redisServer{
                     }
                 }
             }
+            */
+        
+            std::ifstream file("Redis Cache");
+
+            std::string word;
+            file >> word;
+            std::string result = "";
+            if(word == "LISTS"){
+                while(file >> word){
+                    result.append(word);
+                    result.append(" ");
+                }
+            }
+
+            std::cout << result;
+            setSnapList(result);
+
+
+            return "OK\n";
+        
         }
         
         return "ERR Invalid Command\n";

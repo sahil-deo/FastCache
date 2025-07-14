@@ -2,6 +2,7 @@
 #include <cstdint>
 #include "hashTable.h"
 #include <cstring>
+#include <sstream>
 
 struct Node{
     Node* after;
@@ -374,7 +375,8 @@ bool delListR(std::string key, int list_index)
     return true;
 }
 
-std::string getListKeys(){
+std::string getListKeys()
+{
     std::string result = "";
 
     if(ListTable.size == 0) return "\n";
@@ -391,4 +393,78 @@ std::string getListKeys(){
     
     std::cout << "RESULT : " << result << "\n";
     return result;
+}
+
+std::string getSnapList()
+{
+    
+
+    std::string result = "LISTS ";
+    
+    for(int i = 0; i < ListTable.capacity; i++){
+
+        
+        if(ListTable.nodeHeaders[i].key == nullptr) continue;
+        NodeHeader* header = &ListTable.nodeHeaders[i];
+
+        Node* currentNode = header->first;
+
+        result.append(std::to_string(header->size));
+        result.append(" ");
+        result.append(header->key);
+        result.append(" ");
+        while(currentNode != nullptr)
+        {
+            
+            result.append(currentNode->value);
+            result.append(" ");
+            currentNode = currentNode->after;
+        }
+
+    }
+    return result;
+}
+
+void setSnapList(std::string snap)
+{
+    
+    bool haveKey;
+    bool haveLen;
+    std::string listKey;
+    size_t len = 0;
+    std::istringstream iss(snap);
+
+    std::string word;
+
+    while(iss >> word)
+    {
+
+        if(word == "") continue;
+        
+        if(len <= 0)
+        {
+            len = std::stoi(word);
+            std::cout << "\nLength " << len << "\n"; 
+            haveLen = true;
+            iss >> word;
+        }else
+        {
+            --len;
+            if(len == 0)
+            {
+                haveKey = false;
+                listKey = "";
+                continue;   
+            }
+        }
+
+        if(!haveKey)
+        {
+            listKey = word;
+            haveKey = true;
+        }
+
+        pushFrontList(listKey, word);
+
+    }
 }
