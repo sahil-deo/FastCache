@@ -271,7 +271,7 @@ std::string getListR(std::string key, int list_index){
     if(header->size <= list_index) return "Index Out of Bounds\n";
 
     Node* currentNode; 
-    if(list_index < (header->size/2)) { // If index if closer to last then search from last otherwise search from start
+    if(list_index > (header->size/2)) { // If index if closer to last then search from last otherwise search from start
 
         currentNode = header->last;
         
@@ -325,6 +325,54 @@ bool delList(std::string key){
     return true;
 }
 
+bool delListR(std::string key, int list_index)
+{
+    size_t index = getListIndex(key);
+
+    if(ListTable.nodeHeaders[index].key == nullptr) return false;
+
+    NodeHeader* header = &ListTable.nodeHeaders[index];
+
+    if(header->size <= list_index) 
+    {
+        std::cout << "I did\n";
+        return false;
+    }
+    Node* currentNode; 
+    if(list_index > (header->size/2)) // If index if closer to last then search from last otherwise search from start
+    {
+
+        currentNode = header->last;
+        
+        int i = header->size-1;
+        
+        while(i > list_index){
+            currentNode = currentNode->before;
+            --i;
+        }
+    }
+    else{
+                
+        currentNode = header->first;
+        
+        int i = 0;
+
+        while(i < list_index){
+            currentNode = currentNode->after;
+            ++i;
+        }
+    }
+
+    currentNode->before->after = currentNode->after;
+    currentNode->after->before = currentNode->before;
+
+    header->size--;
+
+    delete[] currentNode->value;
+    delete currentNode;
+
+    return true;
+}
 
 std::string getListKeys(){
     std::string result = "";

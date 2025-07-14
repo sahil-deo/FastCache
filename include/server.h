@@ -388,13 +388,18 @@ class redisServer{
             return "ERR Wrong Number of Arguments\n";
 
         }else if (cmd == "LDEL"){
-            std::string key;
+            std::string key, index;
             iss >> key;
             if(!key.empty()){
                 // int deleted = m_list_cache.erase(key);
                 // return std::to_string(deleted) + "\n";
+                bool result;
+                if(iss >> index){
+                    result = delListR(key, std::stoi(index)); // Randomly delete value at index in key list 
+                }else{
+                    result = delList(key); // Delete entire list
+                }
 
-                bool result = delList(key);
                 if(result){
                     return "1\n";
                 }else{
