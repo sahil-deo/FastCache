@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/sahil/Code/cpp/Redis/include
+CXX_INCLUDES = -I/home/sahil/Code/cpp/Redis/include -I/home/sahil/Code/cpp/Redis/include/rapidjson
 
 CXX_FLAGS = -std=gnu++20
 

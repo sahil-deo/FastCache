@@ -4,6 +4,10 @@
 #include <cstring>
 #include <sstream>
 
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/reader.h"
+
 struct Node{
     Node* after;
     Node * before;
@@ -17,10 +21,23 @@ struct NodeHeader{
     char* key;
 };
 
-ListHashTable ListTable = {new NodeHeader[1024], 0, 1024};
+
+NodeHeader* initializeNodeHeaders(size_t capacity) {
+    NodeHeader* headers = new NodeHeader[capacity];
+    for(size_t i = 0; i < capacity; ++i) {
+        headers[i].first = nullptr;
+        headers[i].last = nullptr;
+        headers[i].size = 0;
+        headers[i].key = nullptr;
+    }
+    return headers;
+}
+
+ListHashTable ListTable = {initializeNodeHeaders(1024), 0, 1024};
 
 
-std::uint64_t generateListHash(const char* key, size_t len){
+std::uint64_t generateListHash(const char* key, size_t len)
+{
     uint64_t hash = 14695981039346656037ull;
     for(size_t i = 0; i < len; ++i){
         hash^= static_cast<uint64_t>(key[i]);
@@ -30,16 +47,18 @@ std::uint64_t generateListHash(const char* key, size_t len){
     return hash;
 }
 
-size_t getListIndex(std::string key){
+size_t getListIndex(std::string key)
+{
     uint64_t hash = generateListHash(key.c_str(), key.length());
     
     size_t index = hash % ListTable.capacity;
-
-
+    
+    
     size_t attempts = 0;
     while(ListTable.nodeHeaders[index].key != nullptr && std::strcmp(ListTable.nodeHeaders[index].key, key.c_str()) != 0){
         index = (index + 1) % ListTable.capacity;
         ++attempts;
+        
         if(attempts >= ListTable.capacity){
             return ListTable.capacity;
         }
@@ -53,12 +72,13 @@ void resizeListTable(size_t new_capacity)
     ListHashTable oldTable = ListTable;
     size_t oldCapacity = ListTable.capacity;
 
-    ListTable.nodeHeaders = new NodeHeader[new_capacity];
+    ListTable.nodeHeaders = initializeNodeHeaders(new_capacity);
     ListTable.capacity = new_capacity;
     ListTable.size = 0;
 
     for (size_t i = 0; i < oldCapacity; ++i) {
         if (oldTable.nodeHeaders[i].key != nullptr) {
+
             // Rehash using old key
             uint64_t hash = generateListHash(oldTable.nodeHeaders[i].key, std::strlen(oldTable.nodeHeaders[i].key));
             size_t index = hash % new_capacity;
@@ -72,19 +92,29 @@ void resizeListTable(size_t new_capacity)
             }
 
             ListTable.nodeHeaders[index] = oldTable.nodeHeaders[i];
+
+            oldTable.nodeHeaders[i].key = nullptr;
+            oldTable.nodeHeaders[i].first = nullptr;
+            oldTable.nodeHeaders[i].last = nullptr;
+            oldTable.nodeHeaders[i].size = 0;
+
             ListTable.size++;
         }
     }
+    
+    // Clean up old table
+    delete[] oldTable.nodeHeaders;
 }
 
 
 
 
-void pushBackList(std::string key, std::string value){
+void pushBackList(std::string key, std::string value)
+{
+    if(ListTable.size >= (ListTable.capacity * 0.75)) 
+        resizeListTable(ListTable.size*2);
     
     size_t index = getListIndex(key);
-
-    
     if(index >= ListTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
         return;
@@ -93,11 +123,16 @@ void pushBackList(std::string key, std::string value){
     NodeHeader* header = &ListTable.nodeHeaders[index];
     if (header->first == nullptr){
         
+        // index = getListIndex(key);
+        // header = &ListTable.nodeHeaders[index];
+        
         ListTable.size++;
-        if(ListTable.size >= (ListTable.capacity * 0.75)) resizeListTable(ListTable.size*2);
 
         header->first = new Node;
         header->last = header->first;
+        
+        header->first->after = nullptr;
+        header->first->before = nullptr;
         
         header->key = new char[key.size()+1];
         std::strcpy(header->key, key.c_str());
@@ -107,7 +142,9 @@ void pushBackList(std::string key, std::string value){
     }  
     else{
         Node *newNode = new Node;
+        newNode->after = nullptr;
         newNode->before = header->last;
+        
         header->last->after = newNode;
         header->last = newNode;
         newNode->value = new char[value.size()+1];
@@ -116,8 +153,8 @@ void pushBackList(std::string key, std::string value){
     header->size++;
 }
 
-
-std::string popBackList(std::string key){
+std::string popBackList(std::string key)
+{
     size_t index = getListIndex(key);
     if(index >= ListTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
@@ -155,9 +192,8 @@ std::string popBackList(std::string key){
     return value;
 }
 
-
-void pushFrontList(std::string key, std::string value){
-    
+void pushFrontList(std::string key, std::string value)
+{
     size_t index = getListIndex(key);
     
     if(index >= ListTable.capacity){    
@@ -174,6 +210,9 @@ void pushFrontList(std::string key, std::string value){
         header->first = new Node;
         header->last = header->first;
         
+        header->first->after = nullptr;
+        header->first->before = nullptr;
+        
         header->key = new char[key.size()+1];
         std::strcpy(header->key, key.c_str());
         
@@ -182,7 +221,9 @@ void pushFrontList(std::string key, std::string value){
     }  
     else{
         Node *newNode = new Node;
+        newNode->before = nullptr;
         newNode->after = header->first;
+        
         header->first->before = newNode;
         header->first = newNode;
         newNode->value = new char[value.size()+1];
@@ -192,7 +233,8 @@ void pushFrontList(std::string key, std::string value){
 }
 
 
-std::string popFrontList(std::string key){
+std::string popFrontList(std::string key)
+{
 
     size_t index = getListIndex(key);
     if(index >= ListTable.capacity){    
@@ -232,27 +274,38 @@ std::string popFrontList(std::string key){
 }
 
 
-std::string getList(std::string key){
+std::string getList(std::string key)
+{
+    
     size_t index = getListIndex(key);
-
+    
+    
     if(index >= ListTable.capacity){    
         std::cout << "Out of Bounds List Get\n"; 
         return "\n";
     } 
+    
 
     std::string result = "";
-
+    
     NodeHeader* header = &ListTable.nodeHeaders[index];
-
+    
+    
+    
     if(header->key == nullptr) return "-1\n";
     
     Node* currentNode = header->first;
-
+    
+    
     if(currentNode == nullptr) return "-1\n";
     
     while(currentNode != nullptr){
-        result.append(currentNode->value);
-        result.append(" ");
+        
+        if(currentNode->value){
+            
+            result.append(currentNode->value);
+            result.append(" ");
+        }
         currentNode = currentNode->after;
     }
     result.append("\n");
@@ -261,8 +314,8 @@ std::string getList(std::string key){
     
 }
 
-std::string getListR(std::string key, int list_index){
-
+std::string getListR(std::string key, int list_index)
+{
     size_t index = getListIndex(key);
 
     if(ListTable.nodeHeaders[index].key == nullptr) return "Invalid Key\n";
@@ -300,26 +353,36 @@ std::string getListR(std::string key, int list_index){
     return result;
 }
 
-bool delList(std::string key){
+bool delList(std::string key)
+{
     size_t index = getListIndex(key);
 
     if(index >= ListTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
-        return "false";
+        return false;
     }
 
-    if(ListTable.nodeHeaders[index].key == nullptr) return false;
-
-    
     NodeHeader* header = &ListTable.nodeHeaders[index];
+    
+    if(header->key == nullptr || strcmp(header->key, key.c_str()) != 0) return false;
 
-    while(header->first != nullptr){
-        popBackList(key);
-    }    
+    // Delete all nodes 
+    Node* currentNode = header->first;
+    while(currentNode != nullptr) {
+        Node* nextNode = currentNode->after;
+
+        if(currentNode->value != nullptr)
+            delete[] currentNode->value;
+        
+        delete currentNode;
+        currentNode = nextNode;
+    }
     
-    
+    // Clean up the header
     delete[] header->key;
     header->key = nullptr;
+    header->first = nullptr;
+    header->last = nullptr;
     header->size = 0;
     ListTable.size--;
 
@@ -336,13 +399,13 @@ bool delListR(std::string key, int list_index)
 
     if(header->size <= list_index) 
     {
-        std::cout << "I did\n";
+        std::cout << "Index out of bounds\n";
         return false;
     }
+    
     Node* currentNode; 
-    if(list_index > (header->size/2)) // If index if closer to last then search from last otherwise search from start
+    if(list_index > (header->size/2)) // If index is closer to last then search from last otherwise search from start
     {
-
         currentNode = header->last;
         
         int i = header->size-1;
@@ -353,7 +416,6 @@ bool delListR(std::string key, int list_index)
         }
     }
     else{
-                
         currentNode = header->first;
         
         int i = 0;
@@ -364,8 +426,26 @@ bool delListR(std::string key, int list_index)
         }
     }
 
-    currentNode->before->after = currentNode->after;
-    currentNode->after->before = currentNode->before;
+    // Handle the case where we're removing the only node
+    if(header->first == header->last) {
+        header->first = nullptr;
+        header->last = nullptr;
+    }
+    // Handle the case where we're removing the first node
+    else if(currentNode == header->first) {
+        header->first = currentNode->after;
+        header->first->before = nullptr;
+    }
+    // Handle the case where we're removing the last node
+    else if(currentNode == header->last) {
+        header->last = currentNode->before;
+        header->last->after = nullptr;
+    }
+    // Handle the case where we're removing a middle node
+    else {
+        currentNode->before->after = currentNode->after;
+        currentNode->after->before = currentNode->before;
+    }
 
     header->size--;
 
@@ -391,80 +471,56 @@ std::string getListKeys()
 
     result.append("\n");
     
-    std::cout << "RESULT : " << result << "\n";
+    // std::cout << "LKEYS OBTAINED" << "\n";
     return result;
 }
 
-std::string getSnapList()
+void getSnapList(rapidjson::Writer<rapidjson::StringBuffer>& writer)
 {
     
-
+    /*
     std::string result = "LISTS ";
-    
+
     for(int i = 0; i < ListTable.capacity; i++){
-
         
-        if(ListTable.nodeHeaders[i].key == nullptr) continue;
-        NodeHeader* header = &ListTable.nodeHeaders[i];
 
-        Node* currentNode = header->first;
+    if(ListTable.nodeHeaders[i].key == nullptr) continue;
+    NodeHeader* header = &ListTable.nodeHeaders[i];
 
-        result.append(std::to_string(header->size));
-        result.append(" ");
-        result.append(header->key);
-        result.append(" ");
-        while(currentNode != nullptr)
-        {
-            
-            result.append(currentNode->value);
-            result.append(" ");
-            currentNode = currentNode->after;
-        }
+    Node* currentNode = header->first;
 
+    result.append(std::to_string(header->size));
+    result.append(" ");
+    result.append(header->key);
+    result.append(" ");
+    while(currentNode != nullptr)
+    {
+        
+    result.append(currentNode->value);
+    result.append(" ");
+    currentNode = currentNode->after;
+    }
+    
     }
     return result;
-}
+    */
 
-void setSnapList(std::string snap)
-{
-    
-    bool haveKey;
-    bool haveLen;
-    std::string listKey;
-    size_t len = 0;
-    std::istringstream iss(snap);
 
-    std::string word;
-
-    while(iss >> word)
-    {
-
-        if(word == "") continue;
-        
-        if(len <= 0)
-        {
-            len = std::stoi(word);
-            std::cout << "\nLength " << len << "\n"; 
-            haveLen = true;
-            iss >> word;
-        }else
-        {
-            --len;
-            if(len == 0)
-            {
-                haveKey = false;
-                listKey = "";
-                continue;   
-            }
+    for(int i = 0; i < ListTable.capacity; i++)
+   {
+       if(ListTable.nodeHeaders[i].key == nullptr) continue;
+       
+       NodeHeader* header = &ListTable.nodeHeaders[i];
+       
+       Node* currentNode = header->first;
+       
+       writer.Key(header->key);
+       writer.StartArray();
+       while(currentNode != nullptr)
+       {
+           writer.String(currentNode->value);
+           currentNode = currentNode->after;
         }
-
-        if(!haveKey)
-        {
-            listKey = word;
-            haveKey = true;
-        }
-
-        pushFrontList(listKey, word);
-
-    }
+        writer.EndArray();
+    }   
 }

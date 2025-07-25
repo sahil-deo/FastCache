@@ -192,9 +192,75 @@ CMakeFiles/server.dir/src/server.cpp.o: \
  /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/basic_file.h \
  /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++io.h \
  /usr/include/c++/15.1.1/bits/fstream.tcc \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/stringbuffer.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/stream.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/rapidjson.h \
+ /usr/include/c++/15.1.1/cstring /usr/include/string.h \
+ /usr/include/strings.h /usr/include/inttypes.h \
+ /usr/include/c++/15.1.1/cassert /usr/include/assert.h \
+ /usr/include/c++/15.1.1/utility \
+ /usr/include/c++/15.1.1/bits/stl_relops.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/encodings.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/stack.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/../allocators.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/../rapidjson.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/../internal/meta.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/../internal/../rapidjson.h \
+ /usr/include/c++/15.1.1/memory \
+ /usr/include/c++/15.1.1/bits/stl_tempbuf.h \
+ /usr/include/c++/15.1.1/bits/stl_raw_storage_iter.h \
+ /usr/include/c++/15.1.1/bits/align.h \
+ /usr/include/c++/15.1.1/bits/unique_ptr.h \
+ /usr/include/c++/15.1.1/bits/shared_ptr.h \
+ /usr/include/c++/15.1.1/bits/shared_ptr_base.h \
+ /usr/include/c++/15.1.1/bits/allocated_ptr.h \
+ /usr/include/c++/15.1.1/ext/concurrence.h \
+ /usr/include/c++/15.1.1/bits/shared_ptr_atomic.h \
+ /usr/include/c++/15.1.1/bits/atomic_base.h \
+ /usr/include/c++/15.1.1/bits/atomic_lockfree_defines.h \
+ /usr/include/c++/15.1.1/bits/atomic_wait.h \
+ /usr/include/c++/15.1.1/cstdint /usr/include/c++/15.1.1/climits \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/limits.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/syslimits.h \
+ /usr/include/limits.h /usr/include/bits/posix1_lim.h \
+ /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
+ /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
+ /usr/include/bits/uio_lim.h /usr/include/syscall.h \
+ /usr/include/sys/syscall.h /usr/include/asm/unistd.h \
+ /usr/include/asm/unistd_64.h /usr/include/bits/syscall.h \
+ /usr/include/c++/15.1.1/bits/std_mutex.h \
+ /usr/include/c++/15.1.1/backward/auto_ptr.h \
+ /usr/include/c++/15.1.1/bits/ranges_uninitialized.h \
+ /usr/include/c++/15.1.1/bits/ranges_algobase.h \
+ /usr/include/c++/15.1.1/pstl/glue_memory_defs.h \
+ /usr/include/c++/15.1.1/pstl/execution_defs.h \
+ /usr/include/c++/15.1.1/limits \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/swap.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/../rapidjson.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/writer.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/clzll.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/meta.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/strfunc.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/../stream.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/dtoa.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/itoa.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/diyfp.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/clzll.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/ieee754.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/itoa.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/stringbuffer.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/reader.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/allocators.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/encodedstream.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/memorystream.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/strtod.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/biginteger.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/internal/pow10.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/error/error.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/error/../rapidjson.h \
+ /home/sahil/Code/cpp/Redis/include/rapidjson/filereadstream.h \
  /home/sahil/Code/cpp/Redis/include/dict.h \
- /usr/include/c++/15.1.1/cstdint /usr/include/c++/15.1.1/cstring \
- /usr/include/string.h /usr/include/strings.h \
  /home/sahil/Code/cpp/Redis/include/entry.h \
  /home/sahil/Code/cpp/Redis/include/hashTable.h \
- /home/sahil/Code/cpp/Redis/include/llist.h
+ /home/sahil/Code/cpp/Redis/include/llist.h \
+ /home/sahil/Code/cpp/Redis/include/jsonReader.h

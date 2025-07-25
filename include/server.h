@@ -11,8 +11,15 @@
 #include <deque>
 #include <fstream>
 
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/reader.h"
+#include "rapidjson/filereadstream.h"
+
 #include "dict.h"
 #include "llist.h"
+#include "jsonReader.h"
+
 
 class redisServer{
     
@@ -52,7 +59,7 @@ class redisServer{
                 break;
             }
 
-            std::cout << "Data Received\n";
+            // std::cout << "Data Received\n";
 
             for(int i = 0; i < nfds; i++){
                 int fd = events[i].data.fd;
@@ -179,7 +186,7 @@ class redisServer{
 
             if(bytes > 0){
                 m_clients[fd].buffer.append(buffer, bytes);
-                std::cout << m_clients[fd].buffer;
+                std::cout << "COMMAND: " << m_clients[fd].buffer;
                 process_complete_commands(fd);
             }
             else if(bytes == 0){
@@ -227,9 +234,9 @@ class redisServer{
             client.buffer.erase(0, cmd_end + 1);
 
 
-            std::cout << "Command To be Executed\n";
+            // std::cout << "Command To be Executed\n";
             std::string response = execute_command(command);
-            std::cout << "Command Executed\n";
+            // std::cout << "Command Executed\n";
             send_response(fd, response);            
         }
     }
@@ -239,7 +246,7 @@ class redisServer{
         std::string cmd;
         iss >> cmd;
         for(auto& c: cmd) c = std::toupper(c);
-
+        
         if (cmd == "SET"){
             std::string key, value;
             iss >> key >> value;
@@ -251,7 +258,7 @@ class redisServer{
                 }
                 
                 setString(key, value);
-                std::cout << "Value Stored\n";
+                // std::cout << "STRING SET\n";
                 return "OK\n";
             }
             
@@ -343,11 +350,13 @@ class redisServer{
             return "ERR Wrong Number of Arguments\n";
 
         }else if (cmd == "LGET"){
+
+
+
             std::string key;
             std::string value;
             
             
-            iss >> key;
             {
             // if (!key.empty()){
             //     iss >> value;
@@ -377,13 +386,23 @@ class redisServer{
 
             }
             
+            
+            iss >> key;
             iss >> value;
-            if(!key.empty() && !value.empty()){
-                return getListR(key, std::stoi(value));
-            }
-
-            if(!key.empty()){
-                return getList(key);
+            
+            try{
+                
+                if(!key.empty() && !value.empty()){
+                    //add error check here to know if the value is int, if not call getList instead of getListR
+                    return getListR(key, std::stoi(value));
+                }
+                
+                if(!key.empty()){
+                    return getList(key);
+                }
+            }catch(std::exception &e){
+                std::cout << e.what();
+                exit(EXIT_FAILURE); 
             }
             return "ERR Wrong Number of Arguments\n";
 
@@ -519,115 +538,75 @@ class redisServer{
 
             return result;
         }else if (cmd == "STORE"){
-            /*std::ofstream file("Redis_Cache", std::ios::ate);
-            for(auto&i : m_string_cache){
-                file << " ";
-                file << i.first;
-                file << " ";
-                file << i.second;
-                file << " ";
-                
-                file << ":";
-
-            }
-            file << "; ";
-            for(auto&i : m_list_cache){
-                file << " ";
-                file << i.first;
-                file << " ";
-                for(std::string& f: i.second){
-                    file << " ";
-                    file << f;
-                    file << " ";
-                }
-
-                file << ":";
-            }
-
-            file << "; ";
-
-            file.close();
-            */
             
-            std::ofstream file("Redis Cache", std::ios::ate);
+            rapidjson::StringBuffer s;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+            
+            writer.StartObject();
+            getSnapDict(writer);
+            getSnapList(writer);
+            writer.EndObject();
+            
+            // std::cout << "STORED" << "\n";
 
-            file << getSnapList();
+            std::ofstream file("Redis Cache");
+            file.clear();
+            file << s.GetString();
+            file.close();
 
             return "OK\n";
         }
         else if (cmd == "LOAD"){
-            /*m_string_cache.clear();
-            m_list_cache.clear();
 
-            std::ifstream file("Redis_Cache");
+            FILE* fp = fopen("Redis Cache", "r");
+
+            if(!fp){
+                return "ERR Unable To Open Cache File\n";
+            }
+
+            char buffer[65536];
+
+            rapidjson::FileReadStream stream (fp, buffer, sizeof(buffer));
+
+            rapidjson::Reader reader;
             
-            std::string value;
+            JsonReader handler;
 
-            bool key = true;
-            bool string = true;
-            bool list = false;
-            std::string current_key = "";
-
-            while(file >> value){
-
-                if(current_key == "" && value != ";"){
-                    current_key = value;
-                    file >> value;
-                }
+            if(!reader.Parse(stream, handler)){
+                return "ERR Cannot Parse Json\n";
+            }else{
+                //convert unorderedmap <String, String> to Dict
                 
-                if(value == ":"){
-                    file >> value;
-                    current_key = value;
-                    
-                }else if(value == ":;" || value ==";"){
-                    if(string) {
-                        string = false;
-                        list = true;       
-                        current_key = "";                 
-                    }
-                    else if(!string && list){
-                        return "OK\n";                            
-                    }
+                for(const auto& [key, value] : handler.kvMap)
+                {
+                    setString(key, value);
+                }
 
-                }else if (value == " "){
-
-                }else{
-                    if(string){
-                        m_string_cache[current_key] = value;
-                    }else if(list){
-                        m_list_cache[current_key].push_back(value);
+                //convert unorderedmap <String, Vector<String>> to Lists
+                for(const auto& [key, value] : handler.kaMap)
+                {
+                    delList(key);
+                    for(const auto& item : value)
+                    {
+                        pushBackList(key, item);
                     }
                 }
-            }
-            */
-        
-            std::ifstream file("Redis Cache");
 
-            std::string word;
-            file >> word;
-            std::string result = "";
-            if(word == "LISTS"){
-                while(file >> word){
-                    result.append(word);
-                    result.append(" ");
-                }
             }
 
-            std::cout << result;
-            setSnapList(result);
-
-
+            fclose(fp);
             return "OK\n";
-        
         }
-        
+        else if(cmd == "DELALL"){
+            
+        }
         return "ERR Invalid Command\n";
     }
    
     void send_response(int fd, std::string response){
         auto& client = m_clients[fd];
         client.write_buffer += response;
-        std::cout << "Sending Response\n";
+        // std::cout << "Sending Response\n";
         if(!client.write_buffer.empty()){
             modify_epoll(fd, EPOLLIN | EPOLLOUT | EPOLLET);
         }
