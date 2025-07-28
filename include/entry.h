@@ -1,6 +1,6 @@
 
 
 struct Entry{
-    char* key;
-    char* value;
+    char* key = nullptr;
+    char* value = nullptr;
 };

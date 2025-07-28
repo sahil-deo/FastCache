@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/sahil/Code/cpp/Redis/include -I/home/sahil/Code/cpp/Redis/include/rapidjson
 
-CXX_FLAGS = -std=gnu++20
+CXX_FLAGS = -std=gnu++20 -O3 -funroll-loops -march=native
 

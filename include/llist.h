@@ -426,22 +426,18 @@ bool delListR(std::string key, int list_index)
         }
     }
 
-    // Handle the case where we're removing the only node
     if(header->first == header->last) {
         header->first = nullptr;
         header->last = nullptr;
     }
-    // Handle the case where we're removing the first node
     else if(currentNode == header->first) {
         header->first = currentNode->after;
         header->first->before = nullptr;
     }
-    // Handle the case where we're removing the last node
     else if(currentNode == header->last) {
         header->last = currentNode->before;
         header->last->after = nullptr;
     }
-    // Handle the case where we're removing a middle node
     else {
         currentNode->before->after = currentNode->after;
         currentNode->after->before = currentNode->before;
@@ -523,4 +519,40 @@ void getSnapList(rapidjson::Writer<rapidjson::StringBuffer>& writer)
         }
         writer.EndArray();
     }   
+}
+
+void delAllLists()
+{
+    for(int i = 0; i < ListTable.capacity; i++)
+    {
+        NodeHeader& header = ListTable.nodeHeaders[i];
+        
+        Node* currentNode = header.first;
+        
+        
+        while(currentNode != nullptr)
+        {
+            Node* next = currentNode->after;
+            delete[] currentNode->value;
+            delete currentNode;
+            currentNode = next;
+        }
+        
+        delete[] header.key;
+        header.key = nullptr;
+        header.size = 0;
+        header.first = nullptr;
+        header.last = nullptr;
+    }
+
+    std::cout << "ATE";
+    ListTable.size = 0;
+    std::cout << "SEHT";
+    resizeListTable(1024);
+}
+
+
+size_t getSizeList()
+{
+    return ListTable.size;
 }

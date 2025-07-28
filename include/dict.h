@@ -133,8 +133,12 @@ void resizeStringTable(size_t new_capacity)
     StringTable.capacity = new_capacity;
     StringTable.size = 0;
 
+    for(size_t i = 0; i < new_capacity; ++i) {
+        StringTable.entries[i] = Entry{};
+    }
+
+
     for(size_t i = 0; i < oldCapacity; ++i){
-    
         if(oldTable[i].key != nullptr){
 
             char* key = oldTable[i].key;
@@ -149,8 +153,8 @@ void resizeStringTable(size_t new_capacity)
                 index = (index+1) % StringTable.capacity;
             }
             
-            StringTable.entries[i].key = key;
-            StringTable.entries[i].value = value;
+            StringTable.entries[index].key = key;
+            StringTable.entries[index].value = value;
             ++StringTable.size;                       
         }
     }
@@ -168,4 +172,24 @@ void getSnapDict(rapidjson::Writer<rapidjson::StringBuffer>& writer)
         writer.String(StringTable.entries[i].value);
     }
 
+}
+
+void delAllStrings()
+{
+    for(int i = 0; i < StringTable.capacity; i++)
+    {
+        Entry& e = StringTable.entries[i];
+        delete[] e.key;
+        delete[] e.value;
+
+        e.key = nullptr;
+        e.value = nullptr;
+    }
+    StringTable.size = 0;
+    // resizeStringTable(1024);
+}
+
+size_t getSizeDict()
+{
+    return StringTable.size;
 }
