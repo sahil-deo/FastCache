@@ -545,9 +545,7 @@ void delAllLists()
         header.last = nullptr;
     }
 
-    std::cout << "ATE";
     m_listTable.size = 0;
-    std::cout << "SEHT";
     resizeListTable(1024);
 }
 

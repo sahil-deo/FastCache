@@ -324,22 +324,12 @@ class RedisServer{
             
             iss >> key;
             
-            // while(iss >> value){
-            //     values.push_back(value);
-            //     value.clear();
-            // }
-
-            // if(!key.empty() && !values.empty()){
-            //     m_list_cache[key] = values;
-            //     return "OK\n";
-            // }
-            
             
             if(!key.empty()){
 
                 while(iss >> value){
                     if (value.empty()){break;}
-                    pushBackList(std::move(key), std::move(value));
+                    pushBackList(key, std::move(value));
                 }
 
                 return "OK\n";
@@ -355,36 +345,6 @@ class RedisServer{
 
             std::string key;
             std::string value;
-            
-            
-            {
-            // if (!key.empty()){
-            //     iss >> value;
-            //     if(!value.empty()){
-
-            //         int v = std::stoi(value);
-
-            //         if (v > m_list_cache[key].size()-1){
-            //             return "ERR Index Out of Bounds\n";
-            //         }
-
-            //         std::string result = m_list_cache[key].at(v);
-            //         result.append("\n");
-            //         return result;
-                    
-            //     }
-
-            //     std::string result;
-            //     for(std::string& v: m_list_cache[key]){
-            //         result.append(v);
-            //         result.append(" ");
-            //     }
-            //     result.append("\n");
-            //     std::cout << result << "\n";
-            //     return result;
-            // }
-
-            }
             
             
             iss >> key;
@@ -433,7 +393,7 @@ class RedisServer{
             std::string value;
             if(!key.empty()){
                 while(iss >> value){
-                    pushBackList(key, value);
+                    pushBackList(key, std::move(value));
                 }
                 return "OK\n";
             }
@@ -443,22 +403,6 @@ class RedisServer{
             std::string key;
             iss >> key;
             if(!key.empty()){
-                // std::string value;
-                // std::string result = "";
-                // while(iss >> value){
-                    
-                //     int v = std::stoi(value);
-                //     if(v > m_list_cache[key].size()-1){
-                //         return "ERR Index Out of Bounds\n";
-                //     }
-
-                //     result.append(m_list_cache[key].at(v));
-                //     m_list_cache[key].erase(m_list_cache[key].begin() + v);
-                //     result.append(" ");
-
-                // }
-                // result.append("\n");
-                // return result;
 
                 std::string result = popBackList(std::move(key));
 
@@ -486,22 +430,7 @@ class RedisServer{
             std::string key;
             iss >> key;
             if(!key.empty()){
-                // std::string value;
-                // std::string result = "";
-                // while(iss >> value){
-                    
-                //     int v = std::stoi(value);
-                //     if(v > m_list_cache[key].size()-1){
-                //         return "ERR Index Out of Bounds\n";
-                //     }
 
-                //     result.append(m_list_cache[key].at(v));
-                //     m_list_cache[key].erase(m_list_cache[key].begin() + v);
-                //     result.append(" ");
-
-                // }
-                // result.append("\n");
-                // return result;
 
                 std::string result = popFrontList(std::move(key));
 
@@ -511,18 +440,19 @@ class RedisServer{
             return "ERR Wrong Number of Arguments\n";
         }else if (cmd == "LKEYS"){
             std::string result;
-            // for(auto& it: m_list_cache){
-            //     result.append(it.first);
-            //     result.append(" ");
-            // }
-            // result.append("\n");
-
 
             result = getListKeys();
 
             return result;
         }else if (cmd == "STORE"){
-            
+            std::string key;
+            std::string fileName = "FastCache.json";
+            if(iss>>key)
+            {
+                fileName = key;
+                if(fileName == "" || fileName == " ") fileName = "FastCache";
+                fileName.append(".json");
+            }
             rapidjson::StringBuffer s;
             rapidjson::Writer<rapidjson::StringBuffer> writer(s);
             
@@ -530,10 +460,8 @@ class RedisServer{
             getSnapDict(writer);
             getSnapList(writer);
             writer.EndObject();
-            
-            // std::cout << "STORED" << "\n";
 
-            std::ofstream file("FastCache.json", std::ios::ate);
+            std::ofstream file(fileName, std::ios::ate);
             // file.clear();
             file << s.GetString();
             file.close();
@@ -541,8 +469,17 @@ class RedisServer{
             return "OK\n";
         }
         else if (cmd == "LOAD"){
+            std::string key;
+            std::string fileName = "FastCache.json";
+            if(iss>>key)
+            {
+                fileName = key;
+                if(fileName == "" || fileName == " ") fileName = "FastCache";
+                fileName.append(".json");
+            }
+            std::cout << "\nLoading: " << fileName << "\n";
 
-            FILE* fp = fopen("FastCache.json", "r");
+            FILE* fp = fopen(fileName.c_str(), "r");
 
             if(!fp){
                 return "ERR Unable To Open Cache File\n";
@@ -560,10 +497,7 @@ class RedisServer{
                 return "ERR Cannot Parse Json\n";
             }else{
                 //convert unorderedmap <String, String> to Dict
-                std::cout << "DICT\n";
-                std::cout << "Size Before: " << getSizeDict(); 
                 delAllStrings();
-                std::cout << "\nSize After: " << getSizeDict(); 
                 for(auto& [key, value] : handler.kvMap)
                 {
                     setString(std::move(key), std::move(value));
@@ -586,6 +520,9 @@ class RedisServer{
             return "OK\n";
         }
         else if(cmd == "DELALL"){
+            delAllStrings();
+            delAllLists();
+            return "OK\n";
             
         }
         return "ERR Invalid Command\n";

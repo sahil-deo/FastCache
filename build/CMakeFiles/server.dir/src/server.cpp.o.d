@@ -37,16 +37,16 @@ CMakeFiles/server.dir/src/server.cpp.o: \
  /usr/include/bits/ioctls.h /usr/include/asm/ioctls.h \
  /usr/include/asm-generic/ioctls.h /usr/include/linux/ioctl.h \
  /usr/include/asm/ioctl.h /usr/include/asm-generic/ioctl.h \
- /usr/include/bits/ioctl-types.h /usr/include/sys/ttydefaults.h \
- /usr/include/bits/epoll.h /usr/include/unistd.h \
- /usr/include/bits/posix_opt.h /usr/include/bits/environments.h \
- /usr/include/bits/confname.h /usr/include/bits/getopt_posix.h \
- /usr/include/bits/getopt_core.h /usr/include/bits/unistd_ext.h \
- /usr/include/linux/close_range.h /usr/include/netinet/in.h \
- /usr/include/bits/in.h /usr/include/fcntl.h /usr/include/bits/fcntl.h \
- /usr/include/bits/fcntl-linux.h /usr/include/linux/falloc.h \
- /usr/include/bits/stat.h /usr/include/bits/struct_stat.h \
- /usr/include/c++/15.1.1/iostream \
+ /usr/include/linux/sockios.h /usr/include/bits/ioctl-types.h \
+ /usr/include/sys/ttydefaults.h /usr/include/bits/epoll.h \
+ /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+ /usr/include/bits/environments.h /usr/include/bits/confname.h \
+ /usr/include/bits/getopt_posix.h /usr/include/bits/getopt_core.h \
+ /usr/include/bits/unistd_ext.h /usr/include/linux/close_range.h \
+ /usr/include/netinet/in.h /usr/include/bits/in.h /usr/include/fcntl.h \
+ /usr/include/bits/fcntl.h /usr/include/bits/fcntl-linux.h \
+ /usr/include/linux/falloc.h /usr/include/bits/stat.h \
+ /usr/include/bits/struct_stat.h /usr/include/c++/15.1.1/iostream \
  /usr/include/c++/15.1.1/bits/requires_hosted.h \
  /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++config.h \
  /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/os_defines.h \
