@@ -9,52 +9,48 @@ struct JsonReader : public rapidjson::BaseReaderHandler<rapidjson::UTF8<>, JsonR
     std::unordered_map<std::string, std::string> kvMap;
     std::unordered_map<std::string, std::vector<std::string>> kaMap;
 
-    std::string currentKey;
-    std::vector<std::string> currentArray;
-    bool inArray = false;
+    std::string m_currentKey;
+    std::vector<std::string> m_currentArray;
+    bool m_inArray = false;
 
-    // Existing 2-parameter version
     bool Key(const char* str, rapidjson::SizeType) {
-        currentKey = str;
+        m_currentKey = str;
         return true;
     }
 
-    // ✅ ChatGPT Fix: Required by RapidJSON's Reader
     bool Key(const char* str, rapidjson::SizeType length, bool) {
-        currentKey = std::string(str, length);
+        m_currentKey = std::string(str, length);
         return true;
     }
 
-    // Existing 2-parameter version
     bool String(const char* str, rapidjson::SizeType) {
-        if (inArray) {
-            currentArray.push_back(str);
+        if (m_inArray) {
+            m_currentArray.push_back(str);
         } else {
-            kvMap[currentKey] = str;
+            kvMap[m_currentKey] = str;
         }
         return true;
     }
 
-    // ✅ ChatGPT Fix: Required by RapidJSON's Reader
     bool String(const char* str, rapidjson::SizeType length, bool) {
         std::string val(str, length);
-        if (inArray) {
-            currentArray.push_back(val);
+        if (m_inArray) {
+            m_currentArray.push_back(val);
         } else {
-            kvMap[currentKey] = val;
+            kvMap[m_currentKey] = val;
         }
         return true;
     }
 
     bool StartArray() {
-        inArray = true;
-        currentArray.clear();
+        m_inArray = true;
+        m_currentArray.clear();
         return true;
     }
 
     bool EndArray(rapidjson::SizeType) {
-        kaMap[currentKey] = currentArray;
-        inArray = false;
+        kaMap[m_currentKey] = m_currentArray;
+        m_inArray = false;
         return true;
     }
 };

@@ -21,7 +21,7 @@
 #include "jsonReader.h"
 
 
-class redisServer{
+class RedisServer{
     
     public:
     int m_server_fd;
@@ -38,13 +38,13 @@ class redisServer{
     // std::unordered_map<std::string, std::string> m_string_cache;
     // std::unordered_map<std::string, std::deque<std::string>> m_list_cache;
 
-    redisServer(int port = 5555){
-        setup_server(port);
-        setup_epoll();
+    RedisServer(int port = 5555){
+        setupServer(port);
+        setupEpoll();
     }
 
 
-    void run_server(){
+    void runServer(){
         
         struct epoll_event events[1024];
         std::cout << "Server Started...";
@@ -65,13 +65,13 @@ class redisServer{
                 int fd = events[i].data.fd;
 
                 if(fd == m_server_fd){
-                    accept_new_clients();
+                    acceptNewClients();
                 }else if(events[i].events & EPOLLIN){
-                    read_from_client(fd);
+                    readFromClient(fd);
                 }else if(events[i].events & EPOLLOUT){
-                    write_to_client(fd);
+                    writeToClient(fd);
                 }else if(events[i].events & (EPOLLHUP | EPOLLERR)){
-                    cleanup_client(fd);
+                    cleanupClient(fd);
                 }
 
             }
@@ -80,7 +80,7 @@ class redisServer{
 
     private:
 
-    void setup_server(int port){
+    void setupServer(int port){
         
         m_server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if(m_server_fd < 0){
@@ -103,12 +103,12 @@ class redisServer{
             exit(EXIT_FAILURE);
         }
 
-        make_non_blocking(m_server_fd);
+        makeNonBlocking(m_server_fd);
 
 
     }
 
-    void setup_epoll(){
+    void setupEpoll(){
         m_epoll_fd = epoll_create1(0);
         if (m_epoll_fd == -1){
             perror("Epoll Failure");
@@ -116,10 +116,10 @@ class redisServer{
         }
 
 
-        add_to_epoll(m_server_fd, EPOLLIN);
+        addToEpoll(m_server_fd, EPOLLIN);
     }
 
-    void make_non_blocking(int fd){
+    void makeNonBlocking(int fd){
         int flags = fcntl(fd, F_GETFL, 0);
         if(flags == -1){
             perror("Failed to get socket flags");
@@ -132,7 +132,7 @@ class redisServer{
         }
     }
 
-    void add_to_epoll(int fd, uint32_t events){
+    void addToEpoll(int fd, uint32_t events){
         struct epoll_event ev;
         ev.events = events;
         ev.data.fd = fd;
@@ -146,7 +146,7 @@ class redisServer{
 
     }
 
-    void modify_epoll(int fd, uint32_t events){
+    void modifyEpoll(int fd, uint32_t events){
         struct epoll_event ev;
         ev.events = events;
         ev.data.fd = fd;
@@ -160,7 +160,7 @@ class redisServer{
 
     }
 
-    void accept_new_clients(){
+    void acceptNewClients(){
         while(true){
             int client_fd = accept(m_server_fd, nullptr, nullptr);
             if(client_fd == -1){
@@ -173,13 +173,13 @@ class redisServer{
 
             std::cout << "New Client Connected: " << client_fd << std::endl;
 
-            make_non_blocking(client_fd);
-            add_to_epoll(client_fd, EPOLLIN | EPOLLET);
+            makeNonBlocking(client_fd);
+            addToEpoll(client_fd, EPOLLIN | EPOLLET);
             m_clients[client_fd] = ClientState{};
         }
     }
 
-    void read_from_client(int fd){
+    void readFromClient(int fd){
         char buffer[1024];
         while(true){
             ssize_t bytes = read(fd, buffer, sizeof(buffer));
@@ -187,11 +187,11 @@ class redisServer{
             if(bytes > 0){
                 m_clients[fd].buffer.append(buffer, bytes);
                 std::cout << "COMMAND: " << m_clients[fd].buffer;
-                process_complete_commands(fd);
+                processCompleteCommands(fd);
             }
             else if(bytes == 0){
                 std::cout << "Client " << fd << " Disconnected\n";
-                cleanup_client(fd);
+                cleanupClient(fd);
                 break;
             }
             else if(bytes == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)){
@@ -199,13 +199,13 @@ class redisServer{
             }
             else{
                 perror("read");
-                cleanup_client(fd);
+                cleanupClient(fd);
                 break;
             }
         }
     }
 
-    void write_to_client(int fd){
+    void writeToClient(int fd){
         auto& client = m_clients[fd];
 
         while(!client.write_buffer.empty()){
@@ -216,7 +216,7 @@ class redisServer{
             }else if(errno == EAGAIN || errno == EWOULDBLOCK){
                 break;
             }else{
-                cleanup_client(fd);
+                cleanupClient(fd);
                 break;
             }
         }
@@ -224,7 +224,7 @@ class redisServer{
         
     }
 
-    void process_complete_commands(int fd){
+    void processCompleteCommands(int fd){
         auto& client = m_clients[fd];
         while(true){
             auto cmd_end = client.buffer.find("\n");
@@ -235,13 +235,13 @@ class redisServer{
 
 
             // std::cout << "Command To be Executed\n";
-            std::string response = execute_command(std::move(command));
+            std::string response = executeCommand(std::move(command));
             // std::cout << "Command Executed\n";
-            send_response(fd, response);            
+            sendResponse(fd, response);            
         }
     }
 
-    std::string execute_command(std::string command){
+    std::string executeCommand(std::string command){
         std::istringstream iss(std::move(command));
         std::string cmd;
         iss >> cmd;
@@ -591,21 +591,21 @@ class redisServer{
         return "ERR Invalid Command\n";
     }
    
-    void send_response(int fd, std::string response){
+    void sendResponse(int fd, std::string response){
         auto& client = m_clients[fd];
         client.write_buffer += response;
         // std::cout << "Sending Response\n";
         if(!client.write_buffer.empty()){
-            modify_epoll(fd, EPOLLIN | EPOLLOUT | EPOLLET);
+            modifyEpoll(fd, EPOLLIN | EPOLLOUT | EPOLLET);
         }
 
 
         if(client.write_buffer.empty()){
-           modify_epoll(fd, EPOLLIN | EPOLLET); 
+           modifyEpoll(fd, EPOLLIN | EPOLLET); 
         }
     }
    
-    void cleanup_client(int fd){
+    void cleanupClient(int fd){
         std::cout << "Clean Up Called\n";
         if(epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, nullptr) == -1){
             perror("epoll_ctl DEL");

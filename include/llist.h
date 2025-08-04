@@ -33,7 +33,7 @@ NodeHeader* initializeNodeHeaders(size_t capacity) {
     return headers;
 }
 
-ListHashTable ListTable = {initializeNodeHeaders(1024), 0, 1024};
+ListHashTable m_listTable = {initializeNodeHeaders(1024), 0, 1024};
 
 
 std::uint64_t generateListHash(const char* key, size_t len)
@@ -51,16 +51,16 @@ size_t getListIndex(std::string key)
 {
     uint64_t hash = generateListHash(key.c_str(), key.length());
     
-    size_t index = hash % ListTable.capacity;
+    size_t index = hash % m_listTable.capacity;
     
     
     size_t attempts = 0;
-    while(ListTable.nodeHeaders[index].key != nullptr && std::strcmp(ListTable.nodeHeaders[index].key, key.c_str()) != 0){
-        index = (index + 1) % ListTable.capacity;
+    while(m_listTable.nodeHeaders[index].key != nullptr && std::strcmp(m_listTable.nodeHeaders[index].key, key.c_str()) != 0){
+        index = (index + 1) % m_listTable.capacity;
         ++attempts;
         
-        if(attempts >= ListTable.capacity){
-            return ListTable.capacity;
+        if(attempts >= m_listTable.capacity){
+            return m_listTable.capacity;
         }
     }  
 
@@ -69,12 +69,12 @@ size_t getListIndex(std::string key)
 
 void resizeListTable(size_t new_capacity)
 {
-    ListHashTable oldTable = ListTable;
-    size_t oldCapacity = ListTable.capacity;
+    ListHashTable oldTable = m_listTable;
+    size_t oldCapacity = m_listTable.capacity;
 
-    ListTable.nodeHeaders = initializeNodeHeaders(new_capacity);
-    ListTable.capacity = new_capacity;
-    ListTable.size = 0;
+    m_listTable.nodeHeaders = initializeNodeHeaders(new_capacity);
+    m_listTable.capacity = new_capacity;
+    m_listTable.size = 0;
 
     for (size_t i = 0; i < oldCapacity; ++i) {
         if (oldTable.nodeHeaders[i].key != nullptr) {
@@ -84,21 +84,21 @@ void resizeListTable(size_t new_capacity)
             size_t index = hash % new_capacity;
 
             size_t attempts = 0;
-            while (ListTable.nodeHeaders[index].key != nullptr && 
-                std::strcmp(ListTable.nodeHeaders[index].key, oldTable.nodeHeaders[i].key) != 0) {
+            while (m_listTable.nodeHeaders[index].key != nullptr && 
+                std::strcmp(m_listTable.nodeHeaders[index].key, oldTable.nodeHeaders[i].key) != 0) {
                 index = (index + 1) % new_capacity;
                 ++attempts;
                 if (attempts >= new_capacity) break;  
             }
 
-            ListTable.nodeHeaders[index] = oldTable.nodeHeaders[i];
+            m_listTable.nodeHeaders[index] = oldTable.nodeHeaders[i];
 
             oldTable.nodeHeaders[i].key = nullptr;
             oldTable.nodeHeaders[i].first = nullptr;
             oldTable.nodeHeaders[i].last = nullptr;
             oldTable.nodeHeaders[i].size = 0;
 
-            ListTable.size++;
+            m_listTable.size++;
         }
     }
     
@@ -111,22 +111,22 @@ void resizeListTable(size_t new_capacity)
 
 void pushBackList(std::string key, std::string value)
 {
-    if(ListTable.size >= (ListTable.capacity * 0.75)) 
-        resizeListTable(ListTable.size*2);
+    if(m_listTable.size >= (m_listTable.capacity * 0.75)) 
+        resizeListTable(m_listTable.size*2);
     
     size_t index = getListIndex(key);
-    if(index >= ListTable.capacity){    
+    if(index >= m_listTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
         return;
     } 
     
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
     if (header->first == nullptr){
         
         // index = getListIndex(key);
-        // header = &ListTable.nodeHeaders[index];
+        // header = &m_listTable.nodeHeaders[index];
         
-        ListTable.size++;
+        m_listTable.size++;
 
         header->first = new Node;
         header->last = header->first;
@@ -156,12 +156,12 @@ void pushBackList(std::string key, std::string value)
 std::string popBackList(std::string key)
 {
     size_t index = getListIndex(key);
-    if(index >= ListTable.capacity){    
+    if(index >= m_listTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
         return "\n";
     } 
 
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
     
     if(header->key == nullptr) return "";
     
@@ -196,16 +196,16 @@ void pushFrontList(std::string key, std::string value)
 {
     size_t index = getListIndex(key);
     
-    if(index >= ListTable.capacity){    
+    if(index >= m_listTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
         return;
     } 
     
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
     if (header->first == nullptr){
         
-        ListTable.size++;
-        if(ListTable.size >= (ListTable.capacity * 0.75)) resizeListTable(ListTable.size*2);
+        m_listTable.size++;
+        if(m_listTable.size >= (m_listTable.capacity * 0.75)) resizeListTable(m_listTable.size*2);
 
         header->first = new Node;
         header->last = header->first;
@@ -237,12 +237,12 @@ std::string popFrontList(std::string key)
 {
 
     size_t index = getListIndex(key);
-    if(index >= ListTable.capacity){    
+    if(index >= m_listTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
         return "\n";
     } 
 
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
     
     if(header->key == nullptr) return "";
     
@@ -280,7 +280,7 @@ std::string getList(std::string key)
     size_t index = getListIndex(key);
     
     
-    if(index >= ListTable.capacity){    
+    if(index >= m_listTable.capacity){    
         std::cout << "Out of Bounds List Get\n"; 
         return "\n";
     } 
@@ -288,7 +288,7 @@ std::string getList(std::string key)
 
     std::string result = "";
     
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
     
     
     
@@ -318,9 +318,9 @@ std::string getListR(std::string key, int list_index)
 {
     size_t index = getListIndex(key);
 
-    if(ListTable.nodeHeaders[index].key == nullptr) return "Invalid Key\n";
+    if(m_listTable.nodeHeaders[index].key == nullptr) return "Invalid Key\n";
 
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
 
     if(header->size <= list_index) return "Index Out of Bounds\n";
 
@@ -357,12 +357,12 @@ bool delList(std::string key)
 {
     size_t index = getListIndex(key);
 
-    if(index >= ListTable.capacity){    
+    if(index >= m_listTable.capacity){    
         std::cout << "Out of Bounds List Push\n"; 
         return false;
     }
 
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
     
     if(header->key == nullptr || strcmp(header->key, key.c_str()) != 0) return false;
 
@@ -384,7 +384,7 @@ bool delList(std::string key)
     header->first = nullptr;
     header->last = nullptr;
     header->size = 0;
-    ListTable.size--;
+    m_listTable.size--;
 
     return true;
 }
@@ -393,9 +393,9 @@ bool delListR(std::string key, int list_index)
 {
     size_t index = getListIndex(key);
 
-    if(ListTable.nodeHeaders[index].key == nullptr) return false;
+    if(m_listTable.nodeHeaders[index].key == nullptr) return false;
 
-    NodeHeader* header = &ListTable.nodeHeaders[index];
+    NodeHeader* header = &m_listTable.nodeHeaders[index];
 
     if(header->size <= list_index) 
     {
@@ -455,11 +455,11 @@ std::string getListKeys()
 {
     std::string result = "";
 
-    if(ListTable.size == 0) return "\n";
+    if(m_listTable.size == 0) return "\n";
 
-    for(int i = 0; i < ListTable.capacity; ++i){
-        if(ListTable.nodeHeaders[i].key != nullptr){
-            result.append(ListTable.nodeHeaders[i].key);
+    for(int i = 0; i < m_listTable.capacity; ++i){
+        if(m_listTable.nodeHeaders[i].key != nullptr){
+            result.append(m_listTable.nodeHeaders[i].key);
             result.append(" ");
         }
     }
@@ -477,11 +477,11 @@ void getSnapList(rapidjson::Writer<rapidjson::StringBuffer>& writer)
     /*
     std::string result = "LISTS ";
 
-    for(int i = 0; i < ListTable.capacity; i++){
+    for(int i = 0; i < m_listTable.capacity; i++){
         
 
-    if(ListTable.nodeHeaders[i].key == nullptr) continue;
-    NodeHeader* header = &ListTable.nodeHeaders[i];
+    if(m_listTable.nodeHeaders[i].key == nullptr) continue;
+    NodeHeader* header = &m_listTable.nodeHeaders[i];
 
     Node* currentNode = header->first;
 
@@ -502,11 +502,11 @@ void getSnapList(rapidjson::Writer<rapidjson::StringBuffer>& writer)
     */
 
 
-    for(int i = 0; i < ListTable.capacity; i++)
+    for(int i = 0; i < m_listTable.capacity; i++)
    {
-       if(ListTable.nodeHeaders[i].key == nullptr) continue;
+       if(m_listTable.nodeHeaders[i].key == nullptr) continue;
        
-       NodeHeader* header = &ListTable.nodeHeaders[i];
+       NodeHeader* header = &m_listTable.nodeHeaders[i];
        
        Node* currentNode = header->first;
        
@@ -523,9 +523,9 @@ void getSnapList(rapidjson::Writer<rapidjson::StringBuffer>& writer)
 
 void delAllLists()
 {
-    for(int i = 0; i < ListTable.capacity; i++)
+    for(int i = 0; i < m_listTable.capacity; i++)
     {
-        NodeHeader& header = ListTable.nodeHeaders[i];
+        NodeHeader& header = m_listTable.nodeHeaders[i];
         
         Node* currentNode = header.first;
         
@@ -546,7 +546,7 @@ void delAllLists()
     }
 
     std::cout << "ATE";
-    ListTable.size = 0;
+    m_listTable.size = 0;
     std::cout << "SEHT";
     resizeListTable(1024);
 }
@@ -554,5 +554,5 @@ void delAllLists()
 
 size_t getSizeList()
 {
-    return ListTable.size;
+    return m_listTable.size;
 }

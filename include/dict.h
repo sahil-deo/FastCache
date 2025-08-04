@@ -8,7 +8,7 @@
 #include "rapidjson/writer.h"
 
 
-StringHashTable StringTable = {new Entry[1024], 0, 1024};
+StringHashTable m_stringTable = {new Entry[1024], 0, 1024};
 
 
 
@@ -28,42 +28,42 @@ std::uint64_t generateStringHash(const char* key, size_t len){
 
 const char* getString(std::string key){
     uint64_t hash = generateStringHash(key.c_str(), key.length());
-    size_t index = hash % StringTable.capacity;
+    size_t index = hash % m_stringTable.capacity;
     
 
-    while(StringTable.entries[index].key != nullptr && std::strcmp(StringTable.entries[index].key, key.c_str()) != 0){ // strcmp returns 0 if both values are same
-        index = (index + 1) % StringTable.capacity;
+    while(m_stringTable.entries[index].key != nullptr && std::strcmp(m_stringTable.entries[index].key, key.c_str()) != 0){ // strcmp returns 0 if both values are same
+        index = (index + 1) % m_stringTable.capacity;
     }
 
-    if(StringTable.entries[index].key == nullptr){
+    if(m_stringTable.entries[index].key == nullptr){
         return nullptr;
     }
 
-    return StringTable.entries[index].value;
+    return m_stringTable.entries[index].value;
 }
 
 void setString(std::string key, std::string value){
 
-    if (StringTable.size >= (StringTable.capacity * 0.75)){
+    if (m_stringTable.size >= (m_stringTable.capacity * 0.75)){
         //resizeStringTable
-        resizeStringTable(StringTable.capacity*2);
+        resizeStringTable(m_stringTable.capacity*2);
 
     }
     size_t index = getStringIndex(key);
 
     // uint64_t hash = generateStringHash(key.c_str(), key.length());
 
-    // size_t index = hash % StringTable.capacity; // StringTable size = StringTable.capacity
+    // size_t index = hash % m_stringTable.capacity; // m_stringTable size = m_stringTable.capacity
 
-    while(StringTable.entries[index].key != nullptr && std::strcmp(StringTable.entries[index].key, key.c_str()) != 0){
-        index = (index + 1) % StringTable.capacity;
+    while(m_stringTable.entries[index].key != nullptr && std::strcmp(m_stringTable.entries[index].key, key.c_str()) != 0){
+        index = (index + 1) % m_stringTable.capacity;
     }
     
-    Entry *e = &StringTable.entries[index];
+    Entry *e = &m_stringTable.entries[index];
 
     //delete data if key value already exists
     
-    if(e->key == nullptr) ++StringTable.size;
+    if(e->key == nullptr) ++m_stringTable.size;
     
     if (e->key != nullptr) delete[] e->key;
     if (e->value != nullptr) delete[] e->value;
@@ -84,11 +84,11 @@ std::string getKeys(){
 
     std::string result = "";
 
-    if(StringTable.size == 0) return "\n";
+    if(m_stringTable.size == 0) return "\n";
 
-    for(int i = 0; i < StringTable.capacity; ++i){
-        if(StringTable.entries[i].key != nullptr){
-            result.append(StringTable.entries[i].key);
+    for(int i = 0; i < m_stringTable.capacity; ++i){
+        if(m_stringTable.entries[i].key != nullptr){
+            result.append(m_stringTable.entries[i].key);
             result.append(" ");
         }
     }
@@ -98,11 +98,11 @@ std::string getKeys(){
 bool delKey(std::string key){
     size_t index = getStringIndex(key);
     
-    if(index == StringTable.capacity) return false;
+    if(index == m_stringTable.capacity) return false;
 
-    delete[] StringTable.entries[index].key;
-    delete[] StringTable.entries[index].value;
-    StringTable.entries[index] = Entry{};
+    delete[] m_stringTable.entries[index].key;
+    delete[] m_stringTable.entries[index].value;
+    m_stringTable.entries[index] = Entry{};
 
     return true;
 
@@ -111,14 +111,14 @@ bool delKey(std::string key){
 size_t getStringIndex(std::string key){
     uint64_t hash = generateStringHash(key.c_str(), key.length());
 
-    size_t index = hash % StringTable.capacity; // StringTable size = StringTable.capacity
+    size_t index = hash % m_stringTable.capacity; // m_stringTable size = m_stringTable.capacity
 
     size_t attempts = 0;
 
-    while(StringTable.entries[index].key != nullptr && std::strcmp(StringTable.entries[index].key, key.c_str()) != 0){
-        index = (index + 1) % StringTable.capacity;
+    while(m_stringTable.entries[index].key != nullptr && std::strcmp(m_stringTable.entries[index].key, key.c_str()) != 0){
+        index = (index + 1) % m_stringTable.capacity;
         ++attempts;
-        if(attempts >= StringTable.capacity)return StringTable.capacity;
+        if(attempts >= m_stringTable.capacity)return m_stringTable.capacity;
     }
 
     return index;    
@@ -126,15 +126,15 @@ size_t getStringIndex(std::string key){
 
 void resizeStringTable(size_t new_capacity)
 {
-    Entry* oldTable = StringTable.entries;
-    size_t oldCapacity = StringTable.capacity;
+    Entry* oldTable = m_stringTable.entries;
+    size_t oldCapacity = m_stringTable.capacity;
 
-    StringTable.entries = new Entry[new_capacity];
-    StringTable.capacity = new_capacity;
-    StringTable.size = 0;
+    m_stringTable.entries = new Entry[new_capacity];
+    m_stringTable.capacity = new_capacity;
+    m_stringTable.size = 0;
 
     for(size_t i = 0; i < new_capacity; ++i) {
-        StringTable.entries[i] = Entry{};
+        m_stringTable.entries[i] = Entry{};
     }
 
 
@@ -146,16 +146,16 @@ void resizeStringTable(size_t new_capacity)
             
             uint64_t hash = generateStringHash(key, std::strlen(key));
 
-            size_t index = hash%StringTable.capacity;
+            size_t index = hash%m_stringTable.capacity;
 
-            while(StringTable.entries[i].key != nullptr)
+            while(m_stringTable.entries[i].key != nullptr)
             {
-                index = (index+1) % StringTable.capacity;
+                index = (index+1) % m_stringTable.capacity;
             }
             
-            StringTable.entries[index].key = key;
-            StringTable.entries[index].value = value;
-            ++StringTable.size;                       
+            m_stringTable.entries[index].key = key;
+            m_stringTable.entries[index].value = value;
+            ++m_stringTable.size;                       
         }
     }
 
@@ -165,31 +165,31 @@ void resizeStringTable(size_t new_capacity)
 void getSnapDict(rapidjson::Writer<rapidjson::StringBuffer>& writer)
 {
 
-    for(int i = 0; i < StringTable.capacity; i++)
+    for(int i = 0; i < m_stringTable.capacity; i++)
     {
-        if (StringTable.entries[i].key == nullptr) continue;
-        writer.Key(StringTable.entries[i].key);
-        writer.String(StringTable.entries[i].value);
+        if (m_stringTable.entries[i].key == nullptr) continue;
+        writer.Key(m_stringTable.entries[i].key);
+        writer.String(m_stringTable.entries[i].value);
     }
 
 }
 
 void delAllStrings()
 {
-    for(int i = 0; i < StringTable.capacity; i++)
+    for(int i = 0; i < m_stringTable.capacity; i++)
     {
-        Entry& e = StringTable.entries[i];
+        Entry& e = m_stringTable.entries[i];
         delete[] e.key;
         delete[] e.value;
 
         e.key = nullptr;
         e.value = nullptr;
     }
-    StringTable.size = 0;
+    m_stringTable.size = 0;
     // resizeStringTable(1024);
 }
 
 size_t getSizeDict()
 {
-    return StringTable.size;
+    return m_stringTable.size;
 }
