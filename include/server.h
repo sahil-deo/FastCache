@@ -11,11 +11,13 @@
 #include <deque>
 #include <fstream>
 
+//Json Parser
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/reader.h"
 #include "rapidjson/filereadstream.h"
 
+//Include custom headers
 #include "dict.h"
 #include "llist.h"
 #include "jsonReader.h"
@@ -27,6 +29,7 @@ class RedisServer{
     int m_server_fd;
     int m_epoll_fd;
     
+    //Keep track of each client's state
     struct ClientState{
         std::string buffer;
         std::string write_buffer;
@@ -34,9 +37,6 @@ class RedisServer{
     };
 
     std::unordered_map<int, ClientState> m_clients;
-
-    // std::unordered_map<std::string, std::string> m_string_cache;
-    // std::unordered_map<std::string, std::deque<std::string>> m_list_cache;
 
     RedisServer(int port = 5555){
         setupServer(port);
@@ -49,6 +49,8 @@ class RedisServer{
         struct epoll_event events[1024];
         std::cout << "Server Started...";
         while(true){
+
+            //Waiting for events in epoll
             int nfds = epoll_wait(m_epoll_fd, events, 1024, -1);
 
             if (nfds == -1){
@@ -59,8 +61,7 @@ class RedisServer{
                 break;
             }
 
-            // std::cout << "Data Received\n";
-
+            //Loop over each event
             for(int i = 0; i < nfds; i++){
                 int fd = events[i].data.fd;
 
@@ -120,12 +121,18 @@ class RedisServer{
     }
 
     void makeNonBlocking(int fd){
+        
+        //fcntl - control open file descriptors
+
+        //Getting the flags already available in the fd
         int flags = fcntl(fd, F_GETFL, 0);
+
         if(flags == -1){
             perror("Failed to get socket flags");
             exit(EXIT_FAILURE);
         }
 
+        //Add non_block flag and existing flags to the fd
         if (fcntl(fd, F_SETFL, flags | O_NONBLOCK)  < 0){                                                                    
             perror("Failed to set socket to non blocking");
             exit(EXIT_FAILURE);
@@ -137,12 +144,11 @@ class RedisServer{
         ev.events = events;
         ev.data.fd = fd;
 
-
+        //Epoll Control Add
         if(epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1){
             perror("Epoll Add Failure");
             exit(EXIT_FAILURE);
         }
-
 
     }
 
@@ -151,7 +157,7 @@ class RedisServer{
         ev.events = events;
         ev.data.fd = fd;
 
-
+        //Epoll Control Modify
         if(epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1){
             perror("Epoll Modify Failure");
             exit(EXIT_FAILURE);
@@ -173,14 +179,20 @@ class RedisServer{
 
             std::cout << "New Client Connected: " << client_fd << std::endl;
 
+            //When New Client is accepted, fd is created, make that fd non blocking
             makeNonBlocking(client_fd);
+
+            //Add client fd to epoll with IN and Edge Trigger (ET) Flags
             addToEpoll(client_fd, EPOLLIN | EPOLLET);
+            
             m_clients[client_fd] = ClientState{};
         }
     }
 
     void readFromClient(int fd){
         char buffer[1024];
+
+        //Read until no data left || bytes == -1
         while(true){
             ssize_t bytes = read(fd, buffer, sizeof(buffer));
 

@@ -464,7 +464,7 @@ class RedisBenchmark:
 
 def main():
     parser = argparse.ArgumentParser(description='Redis Clone Benchmark Tool')
-    parser.add_argument('--host', '-H', default='localhost', help='Redis host (default: localhost)')
+    parser.add_argument('--host', '-H', default='192.168.1.101', help='Redis host (default: 192.168.1.101)')
     parser.add_argument('--port', '-p', type=int, default=5555, help='Redis port (default: 5555)')
     parser.add_argument('--iterations', '-i', type=int, default=1000, help='Iterations per test (default: 1000)')
     parser.add_argument('--workers', '-w', type=int, default=5, help='Concurrency workers (default: 5)')
