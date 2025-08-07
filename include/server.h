@@ -177,7 +177,7 @@ class RedisServer{
                 continue;
             }
 
-            std::cout << "New Client Connected: " << client_fd << std::endl;
+            // std::cout << "New Client Connected: " << client_fd << std::endl;
 
             //When New Client is accepted, fd is created, make that fd non blocking
             makeNonBlocking(client_fd);
@@ -198,11 +198,11 @@ class RedisServer{
 
             if(bytes > 0){
                 m_clients[fd].buffer.append(buffer, bytes);
-                std::cout << "COMMAND: " << m_clients[fd].buffer;
+                // std::cout << "COMMAND: " << m_clients[fd].buffer;
                 processCompleteCommands(fd);
             }
             else if(bytes == 0){
-                std::cout << "Client " << fd << " Disconnected\n";
+                // std::cout << "Client " << fd << " Disconnected\n";
                 cleanupClient(fd);
                 break;
             }
@@ -489,7 +489,7 @@ class RedisServer{
                 if(fileName == "" || fileName == " ") fileName = "FastCache";
                 fileName.append(".json");
             }
-            std::cout << "\nLoading: " << fileName << "\n";
+            // std::cout << "\nLoading: " << fileName << "\n";
 
             FILE* fp = fopen(fileName.c_str(), "r");
 
@@ -555,7 +555,7 @@ class RedisServer{
     }
    
     void cleanupClient(int fd){
-        std::cout << "Clean Up Called\n";
+        // std::cout << "Clean Up Called\n";
         if(epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, nullptr) == -1){
             perror("epoll_ctl DEL");
         }
