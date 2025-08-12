@@ -4,8 +4,6 @@
 Fast Cache is a caching server developed for local caching.
 
 
-
-
 ![Logo](https://raw.githubusercontent.com/sahil-deo/FastCache/refs/heads/master/FastLogo.jpg)
 
 
@@ -35,7 +33,7 @@ To run tests, run the following command
   -i --iterations <number of Iterations> (default: 1000)
   -H --host <host ip> (default: 192.168.1.101) 
   -w --workers <threads> (default: 5)
-  -p --port <port> (default: 55555)
+  -p --port <port> (default: 5555)
   -q --quick 
   -h --help 
 ```
