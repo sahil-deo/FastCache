@@ -258,7 +258,7 @@ class RedisBenchmark:
         self.benchmark_command(
             'LSET',
             lambda i: f"LSET list_{i} " + " ".join([self.generate_random_value() 
-                                                   for _ in range(random.randint(1, 5))]),
+                                                   for _ in range(random.randint(5, 6))]),
             iterations
         )
         

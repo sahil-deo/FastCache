@@ -321,7 +321,6 @@ std::string getListR(std::string key, int list_index)
     if(m_listTable.nodeHeaders[index].key == nullptr) return "Invalid Key\n";
 
     NodeHeader* header = &m_listTable.nodeHeaders[index];
-
     if(header->size <= list_index) return "Index Out of Bounds\n";
 
     Node* currentNode; 

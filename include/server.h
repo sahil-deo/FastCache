@@ -39,32 +39,36 @@ class RedisServer{
     std::unordered_map<int, ClientState> m_clients;
 
     RedisServer(int port = 5555){
+
         setupServer(port);
         setupEpoll();
+        
     }
 
 
     void runServer(){
-        
-        struct epoll_event events[1024];
-        std::cout << "Server Started...";
-        while(true){
+        try 
+        {
 
-            //Waiting for events in epoll
-            int nfds = epoll_wait(m_epoll_fd, events, 1024, -1);
-
-            if (nfds == -1){
-                if(errno == EINTR){
-                    continue;
+            struct epoll_event events[1024];
+            std::cout << "Server Started...";
+            while(true){
+                
+                //Waiting for events in epoll
+                int nfds = epoll_wait(m_epoll_fd, events, 1024, -1);
+                
+                if (nfds == -1){
+                    if(errno == EINTR){
+                        continue;
+                    }
+                    perror("epoll_wait");
+                    break;
                 }
-                perror("epoll_wait");
-                break;
-            }
-
+                
             //Loop over each event
             for(int i = 0; i < nfds; i++){
                 int fd = events[i].data.fd;
-
+                
                 if(fd == m_server_fd){
                     acceptNewClients();
                 }else if(events[i].events & EPOLLIN){
@@ -74,19 +78,22 @@ class RedisServer{
                 }else if(events[i].events & (EPOLLHUP | EPOLLERR)){
                     cleanupClient(fd);
                 }
-
+                
             }
         }
+        }catch(std::exception &e)
+        {
+            std::cout << e.what();
+        }
     }
-
+    
     private:
-
+    
     void setupServer(int port){
         
         m_server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if(m_server_fd < 0){
-            perror("Server Socket Failure");
-            exit(EXIT_FAILURE);
+            throw std::runtime_error(std::string("Server Socket Failure") + strerror(errno));
         }
 
         struct sockaddr_in addr;
@@ -95,29 +102,42 @@ class RedisServer{
         addr.sin_port = htons(port);
 
         if(bind(m_server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0){
-            perror("Bind Failure");
-            exit(EXIT_FAILURE);
+            throw std::runtime_error(std::string("Bind Failure") + strerror(errno));
         }
 
         if(listen(m_server_fd, SOMAXCONN) < 0){
-            perror("Listen Failure");
+            throw std::runtime_error(std::string("Listen Failure") + strerror(errno));
+        }
+        try
+        {
+            makeNonBlocking(m_server_fd);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "UNABLE TO MAKE THE SERVER SOCKET NON_BLOCKING\n";
+            std::cerr << e.what() << '\n';
+            close(m_server_fd);
             exit(EXIT_FAILURE);
         }
-
-        makeNonBlocking(m_server_fd);
+        
 
 
     }
 
     void setupEpoll(){
-        m_epoll_fd = epoll_create1(0);
-        if (m_epoll_fd == -1){
-            perror("Epoll Failure");
+
+        try
+        {
+
+            m_epoll_fd = epoll_create1(0);
+            if (m_epoll_fd == -1){
+                throw std::runtime_error(std::string("Epoll Failure") + strerror(errno));
+            }
+            addToEpoll(m_server_fd, EPOLLIN);
+        }catch(std::exception& e){
+            close(m_server_fd);
             exit(EXIT_FAILURE);
         }
-
-
-        addToEpoll(m_server_fd, EPOLLIN);
     }
 
     void makeNonBlocking(int fd){
@@ -128,26 +148,30 @@ class RedisServer{
         int flags = fcntl(fd, F_GETFL, 0);
 
         if(flags == -1){
-            perror("Failed to get socket flags");
-            exit(EXIT_FAILURE);
+            close(fd);
+            m_clients.erase(fd);
+            throw std::runtime_error(std::string("Failed to get socket flags") + strerror(errno));
         }
-
+        
         //Add non_block flag and existing flags to the fd
-        if (fcntl(fd, F_SETFL, flags | O_NONBLOCK)  < 0){                                                                    
-            perror("Failed to set socket to non blocking");
-            exit(EXIT_FAILURE);
+        if (fcntl(fd, F_SETFL, flags | O_NONBLOCK)  < 0){       
+            close(fd);
+            m_clients.erase(fd);
+            throw std::runtime_error(std::string("Failed to set socket to non blocking") + strerror(errno));
         }
     }
 
     void addToEpoll(int fd, uint32_t events){
+        
         struct epoll_event ev;
         ev.events = events;
         ev.data.fd = fd;
 
         //Epoll Control Add
         if(epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD, fd, &ev) == -1){
-            perror("Epoll Add Failure");
-            exit(EXIT_FAILURE);
+            close(fd);
+            m_clients.erase(fd);
+            throw std::runtime_error(std::string("Epoll Add Failure") + strerror(errno));
         }
 
     }
@@ -159,8 +183,9 @@ class RedisServer{
 
         //Epoll Control Modify
         if(epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, fd, &ev) == -1){
-            perror("Epoll Modify Failure");
-            exit(EXIT_FAILURE);
+            close(fd);
+            m_clients.erase(fd);
+            throw std::runtime_error(std::string("Epoll Modify Failure") + strerror(errno));
         }
 
 
@@ -173,22 +198,22 @@ class RedisServer{
                 if(errno == EAGAIN || errno == EWOULDBLOCK){
                     break;
                 }
-                perror("accept");
                 continue;
             }
 
-            // std::cout << "New Client Connected: " << client_fd << std::endl;
-
-            //When New Client is accepted, fd is created, make that fd non blocking
-            makeNonBlocking(client_fd);
-
-            //Add client fd to epoll with IN and Edge Trigger (ET) Flags
-            addToEpoll(client_fd, EPOLLIN | EPOLLET);
-            
-            m_clients[client_fd] = ClientState{};
+            try {
+                makeNonBlocking(client_fd);
+                addToEpoll(client_fd, EPOLLIN | EPOLLET);
+                m_clients[client_fd] = ClientState{};
+            } catch(const std::exception& e) {
+                // makeNonBlocking/addToEpoll already closed fd and cleaned up
+                // Just continue to next client
+                continue;
+            }
         }
     }
 
+    
     void readFromClient(int fd){
         char buffer[1024];
 
@@ -210,7 +235,6 @@ class RedisServer{
                 break;
             }
             else{
-                perror("read");
                 cleanupClient(fd);
                 break;
             }
@@ -374,7 +398,6 @@ class RedisServer{
                 }
             }catch(std::exception &e){
                 std::cout << e.what();
-                exit(EXIT_FAILURE); 
             }
             return "ERR Wrong Number of Arguments\n";
 
