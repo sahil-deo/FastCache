@@ -60,4 +60,4 @@ To deploy this project run
     ./server
 ```
 
-The Server would be deployed on the PORT ```55555```
+The Server would be deployed on the PORT ```5555```
